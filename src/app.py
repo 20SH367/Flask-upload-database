@@ -1,36 +1,59 @@
 import os
-from flask import Flask, render_template, request
+from flask import Flask, flash, request, redirect, render_template
+from werkzeug.utils import secure_filename
 
-app= Flask(__name__)
+app=Flask(__name__)
 
-APP_ROOT = os.path.dirname(os.path.abspath(__file__))
+app.secret_key = "godislove"
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
 
-@app.route("/")
-def index():
-    return render_template("upload.html")
+path = os.getcwd()
+# file Upload
+UPLOAD_FOLDER = os.path.join(path, 'uploads')
 
-    
-@app.route("/upload", methods=['POST'])
-def upload():
-    target = os.path.join(APP_ROOT, 'images/')
-    print(target)
+if not os.path.isdir(UPLOAD_FOLDER):
+    os.mkdir(UPLOAD_FOLDER)
+
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 
-    if not os.path.isdir(target):
-        os.mkdir(target)
 
-    for file in request.files.getlist("file"):
-        print(file)
-        filename = file.filename
-        destination ="/".join([target, filename])
-        print(destination)
-        file.save(destination)
-    
-    return render_template("complete.html")    
+
+ALLOWED_EXTENSIONS = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif'}
+
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+@app.route('/')
+def upload_form():
+    return render_template('upload.html')
+
+
+@app.route('/', methods=['POST'])
+def upload_file():
+    if request.method == 'POST':
+        # check if the post request has the file part
+        if 'file' not in request.files:
+            flash('No file part')
+            return redirect(request.url)
+        file = request.files['file']
+        if file.filename == '':
+            flash('No file selected for uploading')
+            return redirect(request.url)
+        if file and allowed_file(file.filename):
+            filename = secure_filename(file.filename)
+            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+            flash('File successfully uploaded')
+            return redirect('/')
+        else:
+            flash('Allowed file types are txt, pdf, png, jpg, jpeg, gif')
+            return redirect(request.url)
+
 
 if __name__ == "__main__":
-    app.run(port=4555, debug=True)
-
+    app.run(host = '127.0.0.1',port = 5000, debug = False)
 
 
 
