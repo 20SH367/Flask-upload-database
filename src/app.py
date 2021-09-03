@@ -16,11 +16,6 @@ if not os.path.isdir(UPLOAD_FOLDER):
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-
-
-
-
-
 @app.route('/')
 def upload_form():
     return render_template('upload.html')
